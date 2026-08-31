@@ -721,16 +721,18 @@ export default function App() {
 
       {/* Report modal */}
       {showReport && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 flex items-start justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-xl max-w-lg w-full shadow-2xl my-8">
             <div className="flex flex-col items-center gap-2 pt-4 pb-1 px-4 no-print">
               <div className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Print report for:</div>
               <div className="flex items-center gap-2 text-sm">
                 <input type="date" value={reportFrom} onChange={(e) => { setReportFrom(e.target.value); setReportPeriod("custom"); }}
-                  className="px-2.5 py-1.5 rounded-lg border border-[#E4E4F0] text-sm" />
+                  style={{ backgroundColor: "#F5F6FB" }}
+                  className="px-2.5 py-1.5 rounded-lg border border-[#C7CBE0] text-sm font-medium" />
                 <span className="text-[#6B7280]">to</span>
                 <input type="date" value={reportTo} onChange={(e) => { setReportTo(e.target.value); setReportPeriod("custom"); }}
-                  className="px-2.5 py-1.5 rounded-lg border border-[#E4E4F0] text-sm" />
+                  style={{ backgroundColor: "#F5F6FB" }}
+                  className="px-2.5 py-1.5 rounded-lg border border-[#C7CBE0] text-sm font-medium" />
               </div>
               <div className="flex items-center gap-2 text-xs mt-1">
                 <button
@@ -739,7 +741,8 @@ export default function App() {
                     setReportTo(todayKey);
                     setReportPeriod("custom");
                   }}
-                  className="px-3 py-1 rounded-full border border-[#E4E4F0] text-[#6B7280] hover:border-[#3730A3] hover:text-[#3730A3]"
+                  style={{ backgroundColor: "#EFF6FF", color: "#1E3A8A" }}
+                  className="px-3 py-1.5 rounded-full font-medium hover:opacity-80"
                 >
                   This Month
                 </button>
@@ -749,13 +752,15 @@ export default function App() {
                     setReportTo(todayKey);
                     setReportPeriod("custom");
                   }}
-                  className="px-3 py-1 rounded-full border border-[#E4E4F0] text-[#6B7280] hover:border-[#3730A3] hover:text-[#3730A3]"
+                  style={{ backgroundColor: "#FFFBEB", color: "#92400E" }}
+                  className="px-3 py-1.5 rounded-full font-medium hover:opacity-80"
                 >
                   This Year
                 </button>
                 <button
                   onClick={() => { setReportFrom(todayKey); setReportTo(todayKey); setReportPeriod("custom"); }}
-                  className="px-3 py-1 rounded-full border border-[#E4E4F0] text-[#6B7280] hover:border-[#3730A3] hover:text-[#3730A3]"
+                  style={{ backgroundColor: "#ECFDF5", color: "#065F46" }}
+                  className="px-3 py-1.5 rounded-full font-medium hover:opacity-80"
                 >
                   Today
                 </button>
