@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   LayoutDashboard, Package, ArrowLeftRight, Plus, Trash2, Pencil, Check,
   Search, Wallet, TrendingUp, TrendingDown, Boxes, AlertTriangle, Store,
-  Lock, Download, X, Undo2, ShieldAlert, Printer, FileText, LogOut, Settings, User, Upload, Share2,
+  Lock, Download, X, Undo2, ShieldAlert, Printer, FileText, LogOut, Settings, User, Upload,
 } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid,
@@ -112,7 +112,7 @@ export default function App() {
   const [ccPass, setCcPass] = useState("");
   const [ccError, setCcError] = useState("");
   const [showReport, setShowReport] = useState(false);
-  const [reportPeriod, setReportPeriod] = useState("month"); // 'month' | 'year' | 'custom'
+  const [reportPeriod, setReportPeriod] = useState("custom"); // 'month' | 'year' | 'custom'
   const [reportFrom, setReportFrom] = useState(new Date().toISOString().slice(0, 8) + "01");
   const [reportTo, setReportTo] = useState(new Date().toISOString().slice(0, 10));
   const isAdmin = role === "admin";
@@ -227,10 +227,11 @@ export default function App() {
   const reportRestockOnly = reportPeriod === "year" ? yearRestockOnly : reportPeriod === "custom" ? customRestockOnly : monthRestockOnly;
   const reportExp = reportPeriod === "year" ? yearExp : reportPeriod === "custom" ? customExp : monthExp;
   const reportProfit = reportPeriod === "year" ? yearProfit : reportPeriod === "custom" ? customProfit : monthProfit;
+  const fmtDate = (d) => new Date(d + "T00:00:00").toLocaleDateString("en-UG", { day: "numeric", month: "short", year: "numeric" });
   const reportLabel = reportPeriod === "year"
     ? yearKey
     : reportPeriod === "custom"
-    ? `${reportFrom} to ${reportTo}`
+    ? (reportFrom === reportTo ? fmtDate(reportFrom) : `${fmtDate(reportFrom)} – ${fmtDate(reportTo)}`)
     : new Date(monthKey + "-02").toLocaleDateString("en-UG", { month: "long", year: "numeric" });
 
   const trend = useMemo(() => {
@@ -371,24 +372,6 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
-  async function shareBackup() {
-    const { blob, filename } = buildBackupFile();
-    const file = new File([blob], filename, { type: "application/json" });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          title: `${shopName} — Backup`,
-          text: `${shopName} data backup — ${new Date().toLocaleDateString("en-UG")}`,
-        });
-      } catch {
-        /* user cancelled the share sheet — nothing to do */
-      }
-    } else {
-      alert("Sharing isn't supported on this browser — use 'Download Full Backup' instead, then attach the file to an email yourself.");
-    }
-  }
-
   function importFullBackup(e) {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
@@ -459,7 +442,7 @@ export default function App() {
   }
 
   function printReport() {
-    const periodLabel = reportPeriod === "year" ? "Annual Report" : reportPeriod === "custom" ? "Custom Report" : "Monthly Report";
+    const periodLabel = "Report";
     const rowsHtml = (type, label) => {
       const rows = reportTx.filter((t) => t.type === type).sort((a, b) => (a.date > b.date ? 1 : -1));
       const subtotal = rows.reduce((s, t) => s + t.amount, 0);
@@ -740,46 +723,50 @@ export default function App() {
       {showReport && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white rounded-xl max-w-lg w-full shadow-2xl my-8">
-            <div className="flex flex-col items-center gap-2 pt-4 no-print">
-              <div className="inline-flex bg-[#F5F6FB] rounded-full p-1">
+            <div className="flex flex-col items-center gap-2 pt-4 pb-1 px-4 no-print">
+              <div className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">Print report for:</div>
+              <div className="flex items-center gap-2 text-sm">
+                <input type="date" value={reportFrom} onChange={(e) => { setReportFrom(e.target.value); setReportPeriod("custom"); }}
+                  className="px-2.5 py-1.5 rounded-lg border border-[#E4E4F0] text-sm" />
+                <span className="text-[#6B7280]">to</span>
+                <input type="date" value={reportTo} onChange={(e) => { setReportTo(e.target.value); setReportPeriod("custom"); }}
+                  className="px-2.5 py-1.5 rounded-lg border border-[#E4E4F0] text-sm" />
+              </div>
+              <div className="flex items-center gap-2 text-xs mt-1">
                 <button
-                  onClick={() => setReportPeriod("month")}
-                  style={reportPeriod === "month" ? { backgroundColor: "#3730A3", color: "#FFFFFF" } : {}}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium ${reportPeriod === "month" ? "" : "text-[#6B7280]"}`}
+                  onClick={() => {
+                    setReportFrom(monthKey + "-01");
+                    setReportTo(todayKey);
+                    setReportPeriod("custom");
+                  }}
+                  className="px-3 py-1 rounded-full border border-[#E4E4F0] text-[#6B7280] hover:border-[#3730A3] hover:text-[#3730A3]"
                 >
                   This Month
                 </button>
                 <button
-                  onClick={() => setReportPeriod("year")}
-                  style={reportPeriod === "year" ? { backgroundColor: "#3730A3", color: "#FFFFFF" } : {}}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium ${reportPeriod === "year" ? "" : "text-[#6B7280]"}`}
+                  onClick={() => {
+                    setReportFrom(yearKey + "-01-01");
+                    setReportTo(todayKey);
+                    setReportPeriod("custom");
+                  }}
+                  className="px-3 py-1 rounded-full border border-[#E4E4F0] text-[#6B7280] hover:border-[#3730A3] hover:text-[#3730A3]"
                 >
-                  Full Year
+                  This Year
                 </button>
                 <button
-                  onClick={() => setReportPeriod("custom")}
-                  style={reportPeriod === "custom" ? { backgroundColor: "#3730A3", color: "#FFFFFF" } : {}}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium ${reportPeriod === "custom" ? "" : "text-[#6B7280]"}`}
+                  onClick={() => { setReportFrom(todayKey); setReportTo(todayKey); setReportPeriod("custom"); }}
+                  className="px-3 py-1 rounded-full border border-[#E4E4F0] text-[#6B7280] hover:border-[#3730A3] hover:text-[#3730A3]"
                 >
-                  Custom Range
+                  Today
                 </button>
               </div>
-              {reportPeriod === "custom" && (
-                <div className="flex items-center gap-2 text-xs">
-                  <input type="date" value={reportFrom} onChange={(e) => setReportFrom(e.target.value)}
-                    className="px-2 py-1 rounded-lg border border-[#E4E4F0] text-xs" />
-                  <span className="text-[#6B7280]">to</span>
-                  <input type="date" value={reportTo} onChange={(e) => setReportTo(e.target.value)}
-                    className="px-2 py-1 rounded-lg border border-[#E4E4F0] text-xs" />
-                </div>
-              )}
             </div>
             <div id="monthly-report-print" className="p-6">
               <div className="text-center mb-4">
                 <div className="display text-lg font-semibold">{shopName}</div>
                 <div className="text-xs text-[#6B7280]">Powered by NileCore Technologies</div>
                 <div className="display text-base font-semibold mt-3">
-                  {reportPeriod === "year" ? "Annual Report" : reportPeriod === "custom" ? "Custom Report" : "Monthly Report"} — {reportLabel}
+                  Report — {reportLabel}
                 </div>
                 <div className="text-[11px] text-[#6B7280]">Generated {new Date().toLocaleString("en-UG")}</div>
               </div>
@@ -869,7 +856,7 @@ export default function App() {
             </div>
             <div className="flex gap-2 p-3 border-t border-[#E4E4F0] no-print">
               <button onClick={printReport} style={{ backgroundColor: "#3730A3", color: "#FFFFFF" }} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium hover:opacity-90">
-                <Printer size={14} /> Print / Save as PDF
+                <Printer size={14} /> Print
               </button>
               <button onClick={() => setShowReport(false)} className="flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-[#E4E4F0] text-sm font-medium hover:bg-[#F5F6FB]">
                 <X size={14} /> Close
@@ -936,21 +923,16 @@ export default function App() {
               <button onClick={() => setShowBackupModal(false)}><X size={16} /></button>
             </div>
             <p className="text-xs text-[#6B7280] mb-4">
-              Everything here lives on this device only. Back up regularly — weekly is a good habit —
-              and get the file somewhere safe: email, WhatsApp, or Google Drive.
+              Everything here lives on this device only. Back up regularly — weekly is a good habit.
+              After downloading, you can open the file from your phone's Files/Downloads app and
+              share it to email, WhatsApp, or Google Drive from there.
             </p>
             <button
-              onClick={shareBackup}
-              style={{ backgroundColor: "#3730A3", color: "#FFFFFF" }}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 mb-2"
-            >
-              <Share2 size={14} /> Send to Email / WhatsApp / Drive
-            </button>
-            <button
               onClick={exportFullBackup}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold border border-[#E4E4F0] hover:bg-[#F5F6FB] mb-3"
+              style={{ backgroundColor: "#3730A3", color: "#FFFFFF" }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 mb-3"
             >
-              <Download size={14} /> Download to This Device Only
+              <Download size={14} /> Download Backup
             </button>
             <div className="border-t border-[#E4E4F0] pt-3">
               <label
